@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import wooteco.subway.exception.application.NonexistentTargetException;
+import wooteco.subway.exception.application.ObjectNotFoundException;
 import wooteco.subway.exception.application.ValidationFailureException;
 import wooteco.subway.line.dao.LineDao;
 import wooteco.subway.line.dao.SectionDao;
@@ -100,14 +102,19 @@ public class LineService {
         routeMapManager.updateSections(findLines());
     }
 
+    // 404 예외를 400 예외로 전환하기 위해 try ~ catch 사용
     @Transactional
     public void addLineStation(Long lineId, SectionRequest request) {
         validateSectionStations(request.getUpStationId(), request.getDownStationId());
 
         Line line = findLineById(lineId);
-        Station upStation = stationService.findExistentStationById(request.getUpStationId());
-        Station downStation = stationService.findExistentStationById(request.getDownStationId());
-        line.addSection(upStation, downStation, request.getDistance());
+        try {
+            Station upStation = stationService.findStationById(request.getUpStationId());
+            Station downStation = stationService.findStationById(request.getDownStationId());
+            line.addSection(upStation, downStation, request.getDistance());
+        } catch (ObjectNotFoundException e) {
+            throw new NonexistentTargetException("상행역이나 하행역이 없습니다.");
+        }
 
         sectionDao.deleteByLineId(lineId);
         sectionDao.insertSections(line);

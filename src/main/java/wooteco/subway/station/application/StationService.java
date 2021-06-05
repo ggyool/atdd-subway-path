@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import wooteco.subway.exception.application.NonexistentTargetException;
+import wooteco.subway.exception.application.ObjectNotFoundException;
 import wooteco.subway.routemap.application.RouteMapManager;
 import wooteco.subway.station.dao.StationDao;
 import wooteco.subway.station.domain.Station;
@@ -28,6 +29,12 @@ public class StationService {
         return StationResponse.of(station);
     }
 
+    public Station findStationById(Long id) {
+        return stationDao.findById(id)
+            .orElseThrow(() -> new ObjectNotFoundException("역ID: " + id));
+    }
+
+    // 이 메서드는 지웠다고 가정
     public Station findExistentStationById(Long id) {
         return stationDao.findById(id)
             .orElseThrow(() -> new NonexistentTargetException("역ID: " + id));
